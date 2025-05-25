@@ -37,14 +37,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        # Assuming your dependencies (including dev tools) are in requirements.txt
-        # If you have a pyproject.toml with a [project.optional-dependencies] group like 'dev':
-        # uv pip install .[dev]
-        # Or if you have separate requirements files:
-        # uv pip install -r requirements.txt -r requirements-dev.txt
-        # For this example, we'll assume all are in requirements.txt or listed explicitly for dev tools
-        uv pip install -r requirements.txt
-        uv pip install ruff mypy isort pytest pytest-cov
+        uv pip install --system -r requirements.txt
+        uv pip install --system ruff mypy isort pytest pytest-cov
 
     - name: Lint with Ruff
       run: ruff check .
