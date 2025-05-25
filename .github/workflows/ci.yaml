@@ -1,0 +1,62 @@
+name: Python CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      shell: bash
+
+    - name: Verify uv installation
+      run: uv --version
+
+    - name: Install dependencies
+      run: |
+        # Assuming your dependencies (including dev tools) are in requirements.txt
+        # If you have a pyproject.toml with a [project.optional-dependencies] group like 'dev':
+        # uv pip install .[dev]
+        # Or if you have separate requirements files:
+        # uv pip install -r requirements.txt -r requirements-dev.txt
+        # For this example, we'll assume all are in requirements.txt or listed explicitly for dev tools
+        uv pip install -r requirements.txt
+        uv pip install ruff mypy isort pytest pytest-cov
+
+    - name: Lint with Ruff
+      run: ruff check .
+
+    - name: Check formatting with Ruff
+      run: ruff format --check .
+
+    - name: Check import order with isort
+      run: isort --check-only --diff .
+
+    - name: Type check with Mypy
+      run: mypy . --install-types --non-interactive
+
+    - name: Run tests with Pytest
+      run: pytest tests/ --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=85
