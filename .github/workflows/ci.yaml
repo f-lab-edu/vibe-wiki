@@ -13,12 +13,13 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
+    defaults:
+      run:
+        working-directory: ./server
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        sparse-checkout: ./server
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
