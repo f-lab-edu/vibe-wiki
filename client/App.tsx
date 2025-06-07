@@ -1,13 +1,25 @@
 import React, {useRef, useState} from 'react';
-import { Stage, Layer, Line, Text } from 'react-konva';
+import { Stage, Layer, Line, Rect } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
 
 import { FaPen, FaEraser, FaUndo, FaRedo } from "react-icons/fa";
 
-type Tool = 'pen' | 'eraser';
+type Tool = 'pen' | 'eraser' | 'select';
 type LineData = {
   tool: Tool;
   points: number[];
+};
+
+type SelectionArea = {
+  startX: number;
+  startY: number;
+  width: number;
+  height: number;
+};
+
+type PopupPosition = {
+  x: number;
+  y: number;
 };
 
 export default function App() {
@@ -15,41 +27,74 @@ export default function App() {
   const [lines, setLines] = useState<LineData[]>([]);
   const [undoStack, setUndoStack] = useState<LineData[][]>([]);
   const [redoStack, setRedoStack] = useState<LineData[][]>([]);
+  const [selectionArea, setSelectionArea] = useState<SelectionArea | null>(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupPosition, setPopupPosition] = useState<PopupPosition>({ x: 0, y: 0 });
   const isDrawing = useRef(false);
+  const isSelecting = useRef(false);
 
   const handleMouseDown = (e: KonvaEventObject<MouseEvent | TouchEvent>) => {
-    isDrawing.current = true;
     const pos = e.target.getStage()?.getPointerPosition();
-    if (!pos) {
-      return;
+    if (!pos) return;
+
+    if (tool === 'select') {
+      isSelecting.current = true;
+      setSelectionArea({
+        startX: pos.x,
+        startY: pos.y,
+        width: 0,
+        height: 0
+      });
+      setShowPopup(false);
+    } else {
+      isDrawing.current = true;
+      setUndoStack((prev) => [...prev, lines]);
+      setRedoStack([]); // Clear redo stack on new action
+      setLines((prevLines) => [...prevLines, { tool, points: [pos.x, pos.y] }]);
     }
-
-    setUndoStack((prev) => [...prev, lines]);
-    setRedoStack([]); // Clear redo stack on new action
-
-    setLines((prevLines) => [...prevLines, { tool, points: [pos.x, pos.y] }]);
   };
 
   const handleMouseMove = (e: KonvaEventObject<MouseEvent | TouchEvent>) => {
-    if (!isDrawing.current) {
-      return;
-    }
     const stage = e.target.getStage();
     const point = stage?.getPointerPosition();
-    
-    if(!point) return;
+    if (!point) return;
 
-    setLines((prevLines) => {
-      const newLines = [...prevLines];
-      const lastLine = newLines[newLines.length - 1];
-      lastLine.points = [...lastLine.points, point.x, point.y];
-      newLines.splice(newLines.length - 1, 1, lastLine);
-      return newLines
-    });
+    if (tool === 'select' && isSelecting.current && selectionArea) {
+      setSelectionArea({
+        startX: selectionArea.startX,
+        startY: selectionArea.startY,
+        width: point.x - selectionArea.startX,
+        height: point.y - selectionArea.startY
+      });
+    } else if (isDrawing.current) {
+      setLines((prevLines) => {
+        const newLines = [...prevLines];
+        const lastLine = newLines[newLines.length - 1];
+        lastLine.points = [...lastLine.points, point.x, point.y];
+        newLines.splice(newLines.length - 1, 1, lastLine);
+        return newLines;
+      });
+    }
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: KonvaEventObject<MouseEvent | TouchEvent>) => {
+    if (tool === 'select' && isSelecting.current && selectionArea) {
+      const stage = e.target.getStage();
+      const point = stage?.getPointerPosition();
+      if (point) {
+        const width = Math.abs(point.x - selectionArea.startX);
+        const height = Math.abs(point.y - selectionArea.startY);
+        if (width > 10 && height > 10) {
+          setPopupPosition({
+            x: selectionArea.startX + width,
+            y: selectionArea.startY
+          });
+          setShowPopup(true);
+        }
+      }
+    }
     isDrawing.current = false;
+    isSelecting.current = false;
   };
 
   const handleUndo = () => {
@@ -70,11 +115,25 @@ export default function App() {
     if (last) setLines(last);
   }
 
+  const handlePopupAction = (action: string) => {
+    console.log(`Selected action: ${action}`);
+    setShowPopup(false);
+    setSelectionArea(null);
+  };
 
   return (
     <div style={{ position: 'relative' }}>
-      {/* 툴바 */}
       <div style={styles.toolbar}>
+        <button
+          onClick={() => setTool('select')}
+          style={{
+            ...styles.toolButton,
+            backgroundColor: tool === 'select' ? '#ddd' : '#fff',
+          }}
+          title="Select"
+        >
+          <span style={{ fontSize: '24px' }}>⬚</span>
+        </button>
         <button
           onClick={() => setTool('pen')}
           style={{
@@ -103,7 +162,18 @@ export default function App() {
         </button>
       </div>
 
-      {/* 캔버스 */}
+      {showPopup && (
+        <div style={{
+          ...styles.popup,
+          left: popupPosition.x,
+          top: popupPosition.y,
+        }}>
+          <button onClick={() => handlePopupAction('convert')}>Convert to Text</button>
+          <button onClick={() => handlePopupAction('export')}>Export as Image</button>
+          <button onClick={() => handlePopupAction('delete')}>Delete</button>
+        </div>
+      )}
+
       <Stage
         width={window.innerWidth}
         height={window.innerHeight}
@@ -129,11 +199,23 @@ export default function App() {
               }
             />
           ))}
+          {selectionArea && (
+            <Rect
+              x={selectionArea.startX}
+              y={selectionArea.startY}
+              width={selectionArea.width}
+              height={selectionArea.height}
+              stroke="#000"
+              strokeWidth={1}
+              dash={[5, 5]}
+              fill="rgba(0, 0, 255, 0.1)"
+            />
+          )}
         </Layer>
       </Stage>
     </div>
   );
-};
+}
 
 const styles: { [key: string]: React.CSSProperties } = {
   toolbar: {
@@ -158,5 +240,16 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: 6,
     cursor: 'pointer',
     backgroundColor: '#fff',
+  },
+  popup: {
+    position: 'absolute',
+    backgroundColor: 'white',
+    borderRadius: 4,
+    padding: '8px',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+    zIndex: 20,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
   },
 };
