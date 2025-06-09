@@ -17,13 +17,16 @@ app = FastAPI(
 
 app.mount("/_expo/static", StaticFiles(directory=EXPO_STATIC_DIR), name="expo-static")
 
+
 @app.get("/favicon.ico")
 async def favicon():
     return FileResponse(os.path.join(WEB_BUILD_DIR, "favicon.ico"))
 
+
 @app.get("/")
 async def serve_app():
     return FileResponse(os.path.join(WEB_BUILD_DIR, "index.html"))
+
 
 @app.get("/ping", tags=["General"])
 async def ping() -> Dict[str, str]:
