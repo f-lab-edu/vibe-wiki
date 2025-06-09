@@ -2,8 +2,8 @@ import os
 from typing import Dict
 
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WEB_BUILD_DIR = os.path.abspath(os.path.join(BASE_DIR, "../../web/dist"))
