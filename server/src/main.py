@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-WEB_BUILD_DIR = os.path.abspath(os.path.join(BASE_DIR, "../../client/dist"))
+WEB_BUILD_DIR = os.path.abspath(os.path.join(BASE_DIR, "../../web/dist"))
 EXPO_STATIC_DIR = os.path.join(WEB_BUILD_DIR, "_expo/static")
 
 app = FastAPI(

@@ -32,6 +32,7 @@ export default function App() {
   const [popupPosition, setPopupPosition] = useState<PopupPosition>({ x: 0, y: 0 });
   const isDrawing = useRef(false);
   const isSelecting = useRef(false);
+  const stageRef = useRef<any>(null);
 
   const handleMouseDown = (e: KonvaEventObject<MouseEvent | TouchEvent>) => {
     const pos = e.target.getStage()?.getPointerPosition();
@@ -117,8 +118,26 @@ export default function App() {
 
   const handlePopupAction = (action: string) => {
     console.log(`Selected action: ${action}`);
+    if (action === 'export') exportSelectionAsImage();
     setShowPopup(false);
     setSelectionArea(null);
+  };
+  
+  const exportSelectionAsImage = () => {
+    if (!selectionArea || !stageRef.current) return;
+  
+    const dataURL = stageRef.current.toDataURL({
+      x: selectionArea.startX,
+      y: selectionArea.startY,
+      width: selectionArea.width,
+      height: selectionArea.height,
+      pixelRatio: 2,
+    });
+  
+    const link = document.createElement('a');
+    link.download = 'selection.png';
+    link.href = dataURL;
+    link.click();
   };
 
   return (
@@ -168,13 +187,12 @@ export default function App() {
           left: popupPosition.x,
           top: popupPosition.y,
         }}>
-          <button onClick={() => handlePopupAction('convert')}>Convert to Text</button>
           <button onClick={() => handlePopupAction('export')}>Export as Image</button>
-          <button onClick={() => handlePopupAction('delete')}>Delete</button>
         </div>
       )}
 
       <Stage
+        ref={stageRef}
         width={window.innerWidth}
         height={window.innerHeight}
         onMouseDown={handleMouseDown}
