@@ -1,8 +1,11 @@
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import { Stage, Layer, Line, Rect } from 'react-konva';
 import { KonvaEventObject } from 'konva/lib/Node';
 
+import { v4 as uuidv4 } from 'uuid';
 import { FaPen, FaEraser, FaUndo, FaRedo } from "react-icons/fa";
+
+import { ENV } from './env';
 
 type Tool = 'pen' | 'eraser' | 'select';
 type LineData = {
@@ -22,6 +25,12 @@ type PopupPosition = {
   y: number;
 };
 
+type MermaidOverlay = {
+  id: string;
+  code: string;
+  area: SelectionArea;
+};
+
 export default function App() {
   const [tool, setTool] = useState<Tool>('pen');
   const [lines, setLines] = useState<LineData[]>([]);
@@ -30,9 +39,47 @@ export default function App() {
   const [selectionArea, setSelectionArea] = useState<SelectionArea | null>(null);
   const [showPopup, setShowPopup] = useState(false);
   const [popupPosition, setPopupPosition] = useState<PopupPosition>({ x: 0, y: 0 });
+  const [mermaidOverlays, setMermaidOverlays] = useState<MermaidOverlay[]>([]);
+  const [draggingOverlayId, setDraggingOverlayId] = useState<string | null>(null);
+  const dragOffset = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
   const isDrawing = useRef(false);
   const isSelecting = useRef(false);
   const stageRef = useRef<any>(null);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+    if (draggingOverlayId === null) return;
+      setMermaidOverlays((prev) =>
+        prev.map((overlay) => {
+        if (overlay.id !== draggingOverlayId) return overlay;
+          const newX = e.clientX - dragOffset.current.x;
+          const newY = e.clientY - dragOffset.current.y;
+          return {
+            ...overlay,
+            area: {
+              ...overlay.area,
+              startX: newX,
+              startY: newY,
+            },
+          };
+        })
+      );
+    };
+
+    const handleMouseUp = () => {
+      setDraggingOverlayId(null);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+    window.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [draggingOverlayId]);
+
 
   const handleMouseDown = (e: KonvaEventObject<MouseEvent | TouchEvent>) => {
     const pos = e.target.getStage()?.getPointerPosition();
@@ -116,11 +163,71 @@ export default function App() {
     if (last) setLines(last);
   }
 
-  const handlePopupAction = (action: string) => {
+  const handlePopupAction = async (action: string) => {
     console.log(`Selected action: ${action}`);
     if (action === 'export') exportSelectionAsImage();
+    else if (action === 'convert_to_flowchart') {
+      const imageData = getSelectedImageData();
+      if (imageData) {
+        const fullResponse = await requestMermaidFromImage(imageData);
+        console.log("Generated Mermaid Code:", fullResponse);
+        const extracted = extractMermaidCode(fullResponse);
+        console.log("Extracted Mermaid Code:\n", extracted);
+        if (!extracted) {
+          alert("Convert failed: No mermaid code found.");
+          return;
+        }
+        removeLinesInSelection();
+        setMermaidOverlays(prev => [
+          ...prev, 
+          { 
+            id: uuidv4(),
+            code: extracted, 
+            area: selectionArea! 
+          },
+        ]);
+      }
+    }
     setShowPopup(false);
     setSelectionArea(null);
+  };
+
+  const handleOverlayMouseDown = (
+    e: React.MouseEvent<HTMLDivElement>,
+    id: string
+  ) => {
+    const overlay = mermaidOverlays.find((o) => o.id === id);
+    if (!overlay) return;
+    setDraggingOverlayId(id);
+    dragOffset.current = {
+      x: e.clientX - overlay.area.startX,
+      y: e.clientY - overlay.area.startY,
+    };
+  };
+
+  const extractMermaidCode = (text: string): string | null => {
+    const match = text.match(/```mermaid\n([\s\S]*?)```/);
+    return match ? match[1].trim() : null;
+  };
+
+  const removeLinesInSelection = () => {
+    if (!selectionArea) return;
+    setLines((prev) => prev.filter(line => {
+      const points = line.points;
+      for (let i = 0; i < points.length; i += 2) {
+        const x = points[i];
+        const y = points[i + 1];
+        if (
+          x >= selectionArea.startX &&
+          x <= selectionArea.startX + selectionArea.width &&
+          y >= selectionArea.startY &&
+          y <= selectionArea.startY + selectionArea.height
+        ) {
+          return false;
+        }
+      }
+      return true;
+    }));
   };
   
   const exportSelectionAsImage = () => {
@@ -139,6 +246,46 @@ export default function App() {
     link.href = dataURL;
     link.click();
   };
+
+  const getSelectedImageData = (): string | null => {
+  if (!selectionArea || !stageRef.current) return null;
+    return stageRef.current.toDataURL({
+      x: selectionArea.startX,
+      y: selectionArea.startY,
+      width: selectionArea.width,
+      height: selectionArea.height,
+      pixelRatio: 2,
+    });
+  };
+
+  const requestMermaidFromImage = async (imageData: string): Promise<string> => {
+    const base64 = imageData.replace(/^data:image\/png;base64,/, '');
+    const response = await fetch(`${ENV.API_BASE_URL}/api/generate-diagram`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image: base64,
+        prompt: "이 이미지를 분석해서 mermaid 형식의 flowchart로 변환해줘.",
+      }),
+    });
+    const { mermaid } = await response.json();
+    return mermaid;
+  };
+
+  const renderMermaidHTML = (code: string) => `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+        <style>body { margin: 0; }</style>
+      </head>
+      <body>
+        <div class="mermaid">
+        ${code}
+        </div>
+        <script>mermaid.initialize({ startOnLoad: true });</script>
+      </body>
+    </html>`;
 
   return (
     <div style={{ position: 'relative' }}>
@@ -188,8 +335,34 @@ export default function App() {
           top: popupPosition.y,
         }}>
           <button onClick={() => handlePopupAction('export')}>Export as Image</button>
+          <button onClick={() => handlePopupAction('convert_to_flowchart')}>Convert to Flowchart</button>
         </div>
       )}
+      
+      {mermaidOverlays.map((overlay, idx) => (
+        <div 
+          key={idx} 
+          style={{ 
+            position: 'absolute', 
+            left: overlay.area.startX, 
+            top: overlay.area.startY, 
+            width: overlay.area.width, 
+            height: overlay.area.height, 
+            zIndex: 50, 
+          }} 
+          onMouseDown={(e) => handleOverlayMouseDown(e, overlay.id)} > 
+          <iframe 
+            srcDoc={renderMermaidHTML(overlay.code)} 
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              border: '1px solid #ccc', 
+              borderRadius: 8, 
+              pointerEvents: 'none', 
+              backgroundColor: 'white', 
+            }} /> 
+        </div> 
+      ))}
 
       <Stage
         ref={stageRef}
