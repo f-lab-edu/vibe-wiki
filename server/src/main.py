@@ -27,11 +27,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 class DiagramRequest(BaseModel):
     image: str
     prompt: str
-
 
 @app.post("/api/generate-diagram")
 async def generate_diagram(req: DiagramRequest):
@@ -56,7 +54,6 @@ async def generate_diagram(req: DiagramRequest):
 
     mermaid_code = response.choices[0].message.content
     return {"mermaid": mermaid_code}
-
 
 @app.get("/", tags=["General"])
 async def read_root() -> Dict[str, str]:
