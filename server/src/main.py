@@ -1,11 +1,10 @@
 import os
-import base64
 from typing import Dict
 
-from fastapi import FastAPI, Request
-from pydantic import BaseModel
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
+from pydantic import BaseModel
 
 api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
@@ -24,9 +23,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class DiagramRequest(BaseModel):
     image: str
     prompt: str
+
 
 @app.post("/api/generate-diagram")
 async def generate_diagram(req: DiagramRequest):
@@ -44,13 +45,14 @@ async def generate_diagram(req: DiagramRequest):
                         },
                     }
                 ],
-            }
+            },
         ],
         max_tokens=1000,
     )
 
     mermaid_code = response.choices[0].message.content
     return {"mermaid": mermaid_code}
+
 
 @app.get("/", tags=["General"])
 async def read_root() -> Dict[str, str]:
