@@ -122,10 +122,10 @@ export default function App() {
     setShowPopup(false);
     setSelectionArea(null);
   };
-  
+
   const exportSelectionAsImage = () => {
     if (!selectionArea || !stageRef.current) return;
-  
+
     const dataURL = stageRef.current.toDataURL({
       x: selectionArea.startX,
       y: selectionArea.startY,
@@ -133,7 +133,7 @@ export default function App() {
       height: selectionArea.height,
       pixelRatio: 2,
     });
-  
+
     const link = document.createElement('a');
     link.download = 'selection.png';
     link.href = dataURL;

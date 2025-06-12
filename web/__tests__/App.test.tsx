@@ -10,7 +10,7 @@ describe('Canvas App Toolbar', () => {
         expect(getByTitle('Eraser')).toBeInTheDocument();
         expect(getByTitle('Select')).toBeInTheDocument();
     });
-    
+
     it('switches to pen tool', () => {
         const { getByTitle } = render(<App />);
         const penBtn = getByTitle('Pen');
@@ -39,15 +39,15 @@ describe('Canvas App Toolbar', () => {
         const { getByTitle } = render(<App />);
         const penBtn = getByTitle('Pen');
         fireEvent.click(penBtn);
-    
+
         const stage = document.querySelector('canvas');
         if (!stage) throw new Error('Stage not found');
-    
+
         fireEvent.mouseDown(stage, { clientX: 50, clientY: 50 });
         fireEvent.mouseMove(stage, { clientX: 100, clientY: 100 });
         fireEvent.mouseUp(stage);
     });
-    
+
     it('erases part of a line with eraser tool', () => {
         const { getByTitle } = render(<App />);
         const penBtn = getByTitle('Pen');
@@ -73,21 +73,21 @@ describe('Canvas App Toolbar', () => {
         const { getByTitle } = render(<App />);
         const penBtn = getByTitle('Pen');
         fireEvent.click(penBtn);
-    
+
         const stage = document.querySelector('canvas');
         if (!stage) throw new Error('Stage not found');
-    
+
         // Draw 3 lines
         for (let i = 0; i < 3; i++) {
           fireEvent.mouseDown(stage, { clientX: 50 + i * 10, clientY: 50 });
           fireEvent.mouseMove(stage, { clientX: 100 + i * 10, clientY: 100 });
           fireEvent.mouseUp(stage);
         }
-    
+
         const undoBtn = getByTitle('Undo');
         fireEvent.click(undoBtn);
         fireEvent.click(undoBtn);
-    
+
         const redoBtn = getByTitle('Redo');
         fireEvent.click(redoBtn);
         fireEvent.click(redoBtn);
@@ -97,15 +97,15 @@ describe('Canvas App Toolbar', () => {
         const { getByTitle, getByText } = render(<App />);
         const selectBtn = getByTitle('Select');
         fireEvent.click(selectBtn);
-    
+
         const stage = document.querySelector('canvas');
         if (!stage) throw new Error('Stage not found');
-    
+
         // simulate select drag area
         fireEvent.mouseDown(stage, { clientX: 100, clientY: 100 });
         fireEvent.mouseMove(stage, { clientX: 200, clientY: 200 });
         fireEvent.mouseUp(stage);
-    
+
         const exportBtn = getByText('Export as Image');
         fireEvent.click(exportBtn);
     });
