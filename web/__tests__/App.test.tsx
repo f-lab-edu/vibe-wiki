@@ -3,8 +3,6 @@ import { render, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import App from '../App';
 
-// jest.mock('react-konva');
-
 describe('Canvas App Toolbar', () => {
     it('renders toolbar buttons', () => {
         const { getByTitle } = render(<App />);
