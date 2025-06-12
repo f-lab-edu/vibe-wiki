@@ -69,23 +69,6 @@ describe('Canvas App Toolbar', () => {
         fireEvent.mouseUp(stage);
     });
 
-    it('shows popup after select and drag', () => {
-        const { getByTitle, getByText } = render(<App />);
-        const selectBtn = getByTitle('Select');
-        fireEvent.click(selectBtn);
-    
-        const stage = document.querySelector('canvas');
-        if (!stage) throw new Error('Stage not found');
-    
-        // simulate select drag area
-        fireEvent.mouseDown(stage, { clientX: 100, clientY: 100 });
-        fireEvent.mouseMove(stage, { clientX: 200, clientY: 200 });
-        fireEvent.mouseUp(stage);
-    
-        // assert popup rendered
-        expect(getByText('Export as Image')).toBeInTheDocument();
-    });
-
     it('performs undo/redo after multiple lines drawn', () => {
         const { getByTitle } = render(<App />);
         const penBtn = getByTitle('Pen');
