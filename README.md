@@ -5,8 +5,8 @@
 <p align="center"><img src="./docs/logo.png" width="180" alt="Vibe Wiki Logo" /></p>
 
 ## Overview
-Vibe Wiki is a smart note-taking application designed to transform your raw handwritten 
-ideas into polished, structured documents and editable diagrams. Capture your thoughts 
+Vibe Wiki is a smart note-taking application designed to transform your raw handwritten
+ideas into polished, structured documents and editable diagrams. Capture your thoughts
 naturally, and let Vibe Wiki handle the organization and conversion.
 
 

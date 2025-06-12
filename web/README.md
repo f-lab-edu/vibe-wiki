@@ -35,7 +35,7 @@ npm test
 
 ## Project Structure
 
-```
+```plaintext
 web/
 ├── src/
 │   ├── components/    # React components
@@ -59,4 +59,4 @@ The project uses Jest and React Testing Library for testing. Test files are loca
 Run tests with:
 ```bash
 npm test
-``` 
+```
