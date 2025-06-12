@@ -5,8 +5,10 @@
 <p align="center"><img src="./docs/logo.png" width="180" alt="Vibe Wiki Logo" /></p>
 
 ## Overview
+Vibe Wiki is a smart note-taking application designed to transform your raw handwritten
+ideas into polished, structured documents and editable diagrams. Capture your thoughts
+naturally, and let Vibe Wiki handle the organization and conversion.
 
-Vibe Wiki is a smart note-taking application designed to transform your raw handwritten ideas into polished, structured documents and editable diagrams. Capture your thoughts naturally, and let Vibe Wiki handle the organization and conversion.
 
 ## Features
 
@@ -14,13 +16,30 @@ Vibe Wiki is a smart note-taking application designed to transform your raw hand
 * **Handwriting to Structured Documents**: Reorganizes and reframes your handwritten notes into a clean, wiki-style document format, making them easy to read, share, and manage.
 * **Content Summarization & Visualization**: Provides concise summaries and visual representations of your note content to help you grasp key information quickly.
 
-### Structure
 
-**Name**          | **Description**           | **Link**
-------------------|---------------------------|--------------
-Web               | The web interface codes   | [./web](./web)
-Server            | Python based server codes | [./server](./server)
+## Project Structure
 
-## 🤝 Contributing
+- `/web` - Frontend React application with canvas-based drawing interface
+- `/server` - FastAPI backend server for note processing and management
+- `/docker` - Docker configuration files
+- `/tests` - Project-wide integration tests
 
-Details on contributing, coding standards, and the development process will be provided in `CONTRIBUTING.md`. (This file would need to be created).
+## Getting Started
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/vibe-wiki.git
+cd vibe-wiki
+```
+
+2. See individual README files in each directory for specific setup instructions:
+- [Web Application Setup](/web/README.md)
+- [Server Setup](/server/README.md)
+
+## Contributing
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
