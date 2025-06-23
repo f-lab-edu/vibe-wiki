@@ -3,8 +3,8 @@ from typing import Dict
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from inference.registry import MODEL_REGISTRY
 from models.diagram_request import DiagramRequest
-from models.inference import call_openai_model, call_sagemaker_model
 from settings import get_settings
 
 app = FastAPI(
@@ -28,13 +28,8 @@ get_settings()
 @app.post("/api/generate-diagram")
 async def generate_diagram(req: DiagramRequest):
     try:
-        if req.model == "openai":
-            mermaid_code = call_openai_model(req.prompt, req.image)
-        elif req.model == "llama":
-            mermaid_code = call_sagemaker_model(req.prompt, req.image)
-        else:
-            # Call OpenAI model by default
-            mermaid_code = call_openai_model(req.prompt, req.image)
+        inference_fn = MODEL_REGISTRY.get(req.model, MODEL_REGISTRY["openai"])
+        mermaid_code = inference_fn(req.prompt, req.image)
         return {"mermaid": mermaid_code}
     except Exception as e:
         return {"error": str(e)}
