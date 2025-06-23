@@ -1,0 +1,41 @@
+name: Run Web Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: web
+
+      - name: Run CI
+        run: npm ci ci
+        working-directory: web
+
+      - name: Run tests with coverage
+        run: npm run test -- --coverage
+        working-directory: web
+
+      - name: Upload coverage to GitHub summary (optional)
+        if: success()
+        run: |
+          mkdir -p $GITHUB_STEP_SUMMARY && cp web/coverage/lcov-report/index.html $GITHUB_STEP_SUMMARY/coverage.html || true
