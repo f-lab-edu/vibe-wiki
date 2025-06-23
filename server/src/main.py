@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from models.diagram_request import DiagramRequest
 from models.inference import call_openai_model, call_sagemaker_model
+from settings import get_settings
 
 app = FastAPI(
     title="Vibe Wiki API",
@@ -19,6 +20,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# To validate the settings and ensure they are loaded correctly
+get_settings()
 
 
 @app.post("/api/generate-diagram")

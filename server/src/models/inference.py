@@ -16,7 +16,7 @@ sagemaker_endpoint = os.getenv("SAGEMAKER_ENDPOINT", "")
 sagemaker_client = boto3.client("sagemaker-runtime", region_name=sagemaker_region)
 
 
-def call_openai_model(prompt: str, base64_image: str) -> str:
+def call_openai_model(prompt: str, base64_image: str) -> str | None:
     response = openai_client.chat.completions.create(
         model="gpt-4o",
         messages=[
@@ -35,10 +35,14 @@ def call_openai_model(prompt: str, base64_image: str) -> str:
         ],
         max_tokens=1000,
     )
+
+    if not response.choices or not response.choices[0].message:
+        return None
+
     return response.choices[0].message.content
 
 
-def call_sagemaker_model(prompt: str, base64_image: str) -> str:
+def call_sagemaker_model(prompt: str, base64_image: str) -> str | None:
     messages = [
         {"role": "user", "content": prompt},
         {
@@ -65,5 +69,7 @@ def call_sagemaker_model(prompt: str, base64_image: str) -> str:
 
     result = response["Body"].read().decode("utf-8")
     result_json = json.loads(result)
+    if not result_json.get("choices") or not result_json["choices"][0].get("message"):
+        return None
 
     return result_json["choices"][0]["message"]["content"]

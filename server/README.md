@@ -9,7 +9,7 @@ FastAPI backend server for the Vibe Wiki application.
 - Diagram conversion services
 - Static file serving for web application
 
-## Tech Stack
+## Tech Stacks
 
 - Python 3.8+
 - FastAPI
