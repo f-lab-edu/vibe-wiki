@@ -42,12 +42,15 @@ jobs:
 
     - name: Lint with Ruff
       run: ruff check .
+      working-directory: ./server
 
     - name: Check formatting with Ruff
       run: ruff format --check .
+      working-directory: ./server
 
     - name: Check import order with isort
       run: isort --check-only --diff .
+      working-directory: ./server
 
     - name: Type check with Mypy
       run: mypy . --install-types --non-interactive

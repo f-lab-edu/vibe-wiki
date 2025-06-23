@@ -7,6 +7,7 @@ ignore_missing_imports = true
 [tool.ruff]
 line-length = 120
 target-version = "py311"
+extend-ignore = ["I001"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "C90", "N", "D"]

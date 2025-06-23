@@ -1,17 +1,10 @@
-import os
 from typing import Dict
 
-from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from openai import OpenAI
-from pydantic import BaseModel
 
-# Load environment variables from .env file
-load_dotenv()
-
-api_key = os.getenv("OPENAI_API_KEY", "")
-client = OpenAI(api_key=api_key)
+from models.diagram_request import DiagramRequest
+from models.inference import call_openai_model, call_sagemaker_model
 
 app = FastAPI(
     title="Vibe Wiki API",
@@ -27,33 +20,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class DiagramRequest(BaseModel):
-    image: str
-    prompt: str
 
 @app.post("/api/generate-diagram")
 async def generate_diagram(req: DiagramRequest):
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "user", "content": req.prompt},
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/png;base64,{req.image}",
-                        },
-                    }
-                ],
-            },
-        ],
-        max_tokens=1000,
-    )
+    try:
+        if req.model == "openai":
+            mermaid_code = call_openai_model(req.prompt, req.image)
+        elif req.model == "llama":
+            mermaid_code = call_sagemaker_model(req.prompt, req.image)
+        else:
+            # Call OpenAI model by default
+            mermaid_code = call_openai_model(req.prompt, req.image)
+        return {"mermaid": mermaid_code}
+    except Exception as e:
+        return {"error": str(e)}
 
-    mermaid_code = response.choices[0].message.content
-    return {"mermaid": mermaid_code}
 
 @app.get("/", tags=["General"])
 async def read_root() -> Dict[str, str]:

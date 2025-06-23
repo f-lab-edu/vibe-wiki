@@ -43,6 +43,9 @@ export default function App() {
   const [draggingOverlayId, setDraggingOverlayId] = useState<string | null>(null);
   const dragOffset = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
+  const [model, setModel] = useState<'openai' | 'llama'>('openai');
+
+
   const isDrawing = useRef(false);
   const isSelecting = useRef(false);
   const stageRef = useRef<any>(null);
@@ -179,11 +182,11 @@ export default function App() {
         }
         removeLinesInSelection();
         setMermaidOverlays(prev => [
-          ...prev, 
-          { 
+          ...prev,
+          {
             id: uuidv4(),
-            code: extracted, 
-            area: selectionArea! 
+            code: extracted,
+            area: selectionArea!
           },
         ]);
       }
@@ -229,7 +232,7 @@ export default function App() {
       return true;
     }));
   };
-  
+
   const exportSelectionAsImage = () => {
     if (!selectionArea || !stageRef.current) return;
 
@@ -265,7 +268,8 @@ export default function App() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         image: base64,
-        prompt: "이 이미지를 분석해서 mermaid 형식의 flowchart로 변환해줘.",
+        prompt: "Please analyze this image and convert it into a Mermaid-format flowchart.",
+        model: model,
       }),
     });
     const { mermaid } = await response.json();
@@ -326,6 +330,24 @@ export default function App() {
         <button onClick={handleRedo} style={styles.toolButton} title="Redo">
           <FaRedo size={24} />
         </button>
+
+        <select
+          value={model}
+          onChange={(e) => setModel(e.target.value as 'openai' | 'llama')}
+          style={{
+            ...styles.toolButton,
+            fontSize: '16px',
+            fontWeight: 'bold',
+            border: '1px solid #ccc',
+            padding: '6px 8px',
+            borderRadius: 6,
+          }}
+          title="Select AI model"
+        >
+          <option value="openai">OpenAI GPT-4o</option>
+          <option value="llama">LLaMA (SageMaker)</option>
+        </select>
+
       </div>
 
       {showPopup && (
@@ -338,30 +360,30 @@ export default function App() {
           <button onClick={() => handlePopupAction('convert_to_flowchart')}>Convert to Flowchart</button>
         </div>
       )}
-      
+
       {mermaidOverlays.map((overlay, idx) => (
-        <div 
-          key={idx} 
-          style={{ 
-            position: 'absolute', 
-            left: overlay.area.startX, 
-            top: overlay.area.startY, 
-            width: overlay.area.width, 
-            height: overlay.area.height, 
-            zIndex: 50, 
-          }} 
-          onMouseDown={(e) => handleOverlayMouseDown(e, overlay.id)} > 
-          <iframe 
-            srcDoc={renderMermaidHTML(overlay.code)} 
-            style={{ 
-              width: '100%', 
-              height: '100%', 
-              border: '1px solid #ccc', 
-              borderRadius: 8, 
-              pointerEvents: 'none', 
-              backgroundColor: 'white', 
-            }} /> 
-        </div> 
+        <div
+          key={idx}
+          style={{
+            position: 'absolute',
+            left: overlay.area.startX,
+            top: overlay.area.startY,
+            width: overlay.area.width,
+            height: overlay.area.height,
+            zIndex: 50,
+          }}
+          onMouseDown={(e) => handleOverlayMouseDown(e, overlay.id)} >
+          <iframe
+            srcDoc={renderMermaidHTML(overlay.code)}
+            style={{
+              width: '100%',
+              height: '100%',
+              border: '1px solid #ccc',
+              borderRadius: 8,
+              pointerEvents: 'none',
+              backgroundColor: 'white',
+            }} />
+        </div>
       ))}
 
       <Stage
