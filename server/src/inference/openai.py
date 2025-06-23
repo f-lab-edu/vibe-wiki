@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, cast
 
 from openai import OpenAI
 
@@ -27,7 +27,7 @@ def call_openai_model(prompt: str, base64_image: str) -> Optional[str]:
         max_tokens=1000,
     )
 
-    response_dict = response.model_dump()
+    response_dict = response_dict = cast(dict, response.model_dump())
     parsed = OpenAIResponse.model_validate(response_dict)
 
     if not parsed.choices or not parsed.choices[0].message:
