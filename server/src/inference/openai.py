@@ -27,9 +27,7 @@ def call_openai_model(prompt: str, base64_image: str) -> Optional[str]:
         max_tokens=1000,
     )
 
-    response_dict = response_dict = cast(dict, response.model_dump())
-    parsed = OpenAIResponse.model_validate(response_dict)
-
+    parsed = cast(OpenAIResponse, OpenAIResponse.model_validate(response.model_dump()))
     if not parsed.choices or not parsed.choices[0].message:
         return None
     return parsed.choices[0].message.content

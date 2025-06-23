@@ -1,5 +1,5 @@
 import json
-from typing import Optional
+from typing import Optional, cast
 
 import boto3
 
@@ -31,7 +31,7 @@ def call_sagemaker_model(prompt: str, base64_image: str) -> Optional[str]:
     )
 
     result = response["Body"].read().decode("utf-8")
-    parsed = SageMakerResponse.model_validate(json.loads(result))
+    parsed = cast(SageMakerResponse, SageMakerResponse.model_validate(json.loads(result)))
 
     if not parsed.choices or not parsed.choices[0].message:
         return None
